@@ -1,184 +1,141 @@
 <?php
-include_once "/opt/fpp/www/common.php";
-include_once 'functions.inc.php';
-$pluginName = basename(dirname(__FILE__));
-$pluginConfigFile = $settings['configDirectory'] ."/plugin." .$pluginName;
-    
-if (file_exists($pluginConfigFile)) {
-  $pluginSettings = parse_ini_file($pluginConfigFile);
-}
-foreach ($pluginSettings as $key => $value) { 
-  ${$key} = urldecode($value);
-}
-
-$showDisabledDiv="display:none;";
-
-$pluginEnabled = $pluginSettings['ENABLED'];
-if ($pluginEnabled=="OFF"){
-	$showDisabledDiv	="display:block;";
-}else{
-	$showDisabledDiv ="display:none;";
-}
-
-//get active leagues
-$activeLeagues = array();
-
-foreach ($leagues as $league) {
-	if (${$league . "TeamID"} != '') {
-		array_push($activeLeagues, $league);
-	}
-}
-
+/*
+ * fpp-nfl - Pro Sports Scoring Plugin
+ * Live status page - static HTML, data loaded via JS from C++ API
+ */
 ?>
-
 <!DOCTYPE html>
 <html>
 <head>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-    integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1"
-    crossorigin="anonymous">
-  <style>
-    #bodyWrapper {
-      background-color: #20222e;
-    }
-    .pageContent {
-      background-color: #171720;
-    }
-    .plugin-body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      color: rgb(238, 238, 238);
-      background-color: rgb(0, 0, 0);
-      font-size: 1rem;
-      font-weight: 400;
-      line-height: 1.5;
-      padding-bottom: 2em;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
-      background-position: top center;
-      background-size: auto 100%;
-    }
-    .card {
-      background-color: rgba(59, 69, 84, 0.7);
-      border-radius: 0.5em;
-      margin: 1em 1em 1em 1em;
-      padding: 1em 1em 1em 1em;
-    }
-  </style>
+  <title>Pro Sports Scoring - Status</title>
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
+        integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi"
+        crossorigin="anonymous">
 </head>
-<body>
-  <div class="container-fluid plugin-body">
-	<div class="container-fluid pt-4">
-		<div class="card">
-			<div class="justify-content-md-center row py-3">
-				<div class="col-md-auto">
-					<h1 class="text-white">Pro Sports Scoring Plugin</h1>
-				</div>
-			</div>
-		</div>
-		<div class="container-fluid">
-			<div class="card">											 
-        		<!-- Status -->
-				<div class="justify-content-md-center row pt-4">
-					<div class="col-md-auto">
-						<h3 class="text-white">Game Status</h3>
-							<div style= "<?=$showDisabledDiv?>color:red;">
-								Notice: Plugin is disabled
-							</div>																
-					</div>          
-				</div>
-				<div class="justify-content-md-center row">
-					<?php foreach($activeLeagues as $league) { ?>
-						<div class="col-6 py-5">
-						<div  style= "height:100; width:100; margin:auto">
-							<img id="logoImage" src="<?echo ${$league . "TeamLogo"};?>" width="100" height ="100">
-						</div>	
-						<div class="justify-content-md-center row pt-4">
-							<div class="col-md-4">
-								<div class="card-title h5 text-white">
-									<?php if ($league == "nfl" || $league == "ncaa") {
-										echo "Kickoff:";
-									} elseif ($league == "nhl") {
-										echo "Puck Drop:";
-									} elseif ($league == "mlb") {
-										echo "First Pitch";
-									} ?>
-								</div>
-							</div>
-							<div class="col-md-7">
-								<div class="card-title text-white">
-								<?php if (${$league . "Start"} == "0") {
-									echo 'No game scheduled this week';
-								} else {
-									${$league . "Start"} = new DateTime(${$league . "Start"}, new DateTimeZone("UTC"));
-									${$league . "Start"}->setTimezone(new DateTimeZone(date_default_timezone_get()));
-									echo ${$league . "Start"}->format("l, F j @ g:i A");
-								} ?>
-								</div>
-							</div>
-						</div>
-						<?php if (!in_array(${$league . "Start"}, array("0", "1"))) { ?>
-						<div class="justify-content-md-center row">
-							<div class="col-md-4">
-								<div class="card-title h5 text-white">
-									Opponent:
-								</div>
-							</div>
-							<div class="col-md-7">
-								<div class="card-title text-white">
-									<?=${$league . "OppoName"}?>
-								</div>
-							</div>
-						</div>
-						<div class="justify-content-md-center row pt-5">
-							<div class="col-md-4">
-								<div class="card-title h5 text-white">
-									Game Status:
-								</div>
-							</div>
-							<div class="col-md-7">
-								<div class="card-title text-white">
-									<?php if (${$league . "GameStatus"} == "pre") {
-										echo "Pregame";
-									} elseif (${$league . "GameStatus"} == "in") { 
-										echo "Playing";
-									} elseif (${$league . "GameStatus"} == "post") {
-										echo "Postgame";
-									} ?>
-								</div>
-							</div>
-						</div>
-						<div class="justify-content-md-center row">
-							<div class="col-md-4">
-								<div class="card-title h5 text-white">
-									<?=${$league . "TeamAbbreviation"}?> Score:
-								</div>
-							</div>
-							<div class="col-md-7">
-								<div class="card-title text-white">
-									<?=${$league . "MyScore"}?>
-								</div>
-							</div>
-						</div>
-						<div class="justify-content-md-center row">
-							<div class="col-md-4">
-								<div class="card-title h5 text-white">
-									<?=${$league . "OppoAbbreviation"}?> Score:
-								</div>
-							</div>
-							<div class="col-md-7">
-								<div class="card-title text-white">
-									<?=${$league . "OppoScore"}?>
-								</div>
-							</div>
-						</div>
-						<?php } ?>
-					</div>
-					<?php } ?>
-				</div>
-			</div>
-		</div>
-	</div>
-</div>  
+<body class="p-3">
+
+<h2 class="mb-4">Pro Sports Scoring &mdash; Live Status</h2>
+
+<div id="disabled-notice" class="alert alert-warning d-none">
+  Plugin is currently disabled. Enable it in the Settings tab.
+</div>
+
+<div id="status-container">
+  <div class="text-muted">Loading&hellip;</div>
+</div>
+
+<script>
+const LEAGUE_LABELS = {
+    nfl:  'NFL Football',
+    ncaa: 'NCAA Football',
+    nhl:  'NHL Hockey',
+    mlb:  'MLB Baseball'
+};
+
+function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    try {
+        return new Date(dateStr).toLocaleString();
+    } catch (e) {
+        return dateStr;
+    }
+}
+
+function statusBadge(state) {
+    const map = {
+        pre:  '<span class="badge bg-info text-dark">PRE</span>',
+        in:   '<span class="badge bg-success">LIVE</span>',
+        post: '<span class="badge bg-secondary">FINAL</span>'
+    };
+    return map[state] || '<span class="badge bg-light text-dark">—</span>';
+}
+
+async function loadStatus() {
+    const container = document.getElementById('status-container');
+    const notice    = document.getElementById('disabled-notice');
+
+    try {
+        const resp = await fetch('/api/plugin-apis/ProSportsScoring/status');
+        if (!resp.ok) {
+            container.innerHTML = '<div class="alert alert-danger">Could not reach plugin API (status ' + resp.status + '). Is fpp-nfl installed and FPP running?</div>';
+            return;
+        }
+        const data = await resp.json();
+
+        if (!data.enabled) {
+            notice.classList.remove('d-none');
+            container.innerHTML = '';
+            return;
+        }
+        notice.classList.add('d-none');
+
+        const leagues = data.leagues || {};
+        let html = '';
+        let anyActive = false;
+
+        for (const lg of ['nfl', 'ncaa', 'nhl', 'mlb']) {
+            const ls = leagues[lg] || {};
+            if (!ls.teamID) continue;
+            anyActive = true;
+
+            const label     = LEAGUE_LABELS[lg] || lg.toUpperCase();
+            const logoHtml  = ls.teamLogo
+                ? `<img src="${ls.teamLogo}" alt="${ls.teamName}" style="height:48px;" class="rounded me-3">`
+                : '';
+            const gameState = ls.gameStatus || '';
+            const oppoName  = ls.oppoName || '—';
+
+            let scoreHtml = '';
+            if (gameState === 'in' || gameState === 'post') {
+                scoreHtml = `
+                <div class="mt-2">
+                  <span class="fs-4 fw-bold">${ls.teamName || ls.teamID} ${ls.myScore ?? 0}</span>
+                  <span class="fs-5 text-muted mx-2">vs</span>
+                  <span class="fs-4 fw-bold">${oppoName} ${ls.oppoScore ?? 0}</span>
+                </div>`;
+            }
+
+            html += `
+<div class="card mb-3">
+  <div class="card-header d-flex align-items-center">
+    ${logoHtml}
+    <div>
+      <strong>${label}</strong><br>
+      <small class="text-muted">${ls.teamName || ls.teamID}</small>
+    </div>
+    <div class="ms-auto">${statusBadge(gameState)}</div>
+  </div>
+  <div class="card-body">
+    <dl class="row mb-0">
+      <dt class="col-sm-3">Opponent</dt>
+      <dd class="col-sm-9">${oppoName}</dd>
+
+      <dt class="col-sm-3">Next / Current Game</dt>
+      <dd class="col-sm-9">${formatDate(ls.nextEventDate)}</dd>
+    </dl>
+    ${scoreHtml}
+  </div>
+</div>`;
+        }
+
+        if (!anyActive) {
+            html = '<div class="text-muted">No teams configured. Go to the Settings tab to set up your teams.</div>';
+        }
+
+        container.innerHTML = html;
+    } catch (e) {
+        container.innerHTML = '<div class="alert alert-danger">Error loading status: ' + e + '</div>';
+    }
+}
+
+// Load on page ready, then refresh every 10 seconds
+loadStatus();
+setInterval(loadStatus, 10000);
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3"
+        crossorigin="anonymous"></script>
 </body>
 </html>

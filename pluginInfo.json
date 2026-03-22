@@ -1,11 +1,11 @@
 {
 	"repoName": "fpp-nfl",
-	"name": "Pro Sports Scoring Plugin",
-	"author": "Ben Kools (koolsb)",
-	"description": "Automatically play a celebratory sequence when your NFL, NHL, MLB or NCAA Football team scores or wins!",
-	"homeURL": "https://github.com/koolsb/fpp-nfl",
-	"srcURL": "https://github.com/koolsb/fpp-nfl.git",
-	"bugURL": "https://github.com/koolsb/fpp-nfl/issues",
+	"name": "GameDay",
+	"author": "Daryl (derwin12)",
+	"description": "Trigger FPP light sequences when your NFL, NHL, MLB or NCAA team scores or wins — live game tracking via ESPN.",
+	"homeURL": "https://github.com/derwin12/fpp-nfl",
+	"srcURL": "https://github.com/derwin12/fpp-nfl.git",
+	"bugURL": "https://github.com/derwin12/fpp-nfl/issues",
 	"allowUpdates": 1,
 	"versions": [
 		{

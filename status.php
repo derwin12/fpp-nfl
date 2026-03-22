@@ -7,12 +7,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Pro Sports Scoring - Status</title>
+  <title>GameDay &mdash; Live Status</title>
   <!-- Bootstrap is already loaded by FPP's shell page -->
 </head>
 <body class="p-3">
 
-<h2 class="mb-4">Pro Sports Scoring &mdash; Live Status</h2>
+<h2 class="mb-4">GameDay &mdash; Live Status</h2>
 
 <div id="disabled-notice" class="alert alert-warning d-none">
   Plugin is currently disabled. Enable it in the Settings tab.

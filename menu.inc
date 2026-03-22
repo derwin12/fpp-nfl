@@ -13,13 +13,13 @@
 
 $menuEntries = Array(
 	Array(
-		'text' => 'Pro Sports Scoring Setup',
+		'text' => 'GameDay Setup',
 		'type' => 'content',
 		'page' => 'content.php',
 		'wrap' => 1
 	),
 	Array(
-		'text' => 'Pro Sports Scoring Status',
+		'text' => 'GameDay Status',
 		'type' => 'status',
 		'page' => 'status.php',
 		'wrap' => 1

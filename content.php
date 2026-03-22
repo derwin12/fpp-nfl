@@ -70,12 +70,12 @@ $sequences = getSequences();
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Pro Sports Scoring</title>
+  <title>GameDay</title>
   <!-- Bootstrap is already loaded by FPP's shell page -->
 </head>
 <body class="p-3">
 
-<h2 class="mb-4">Pro Sports Scoring Plugin</h2>
+<h2 class="mb-4">GameDay</h2>
 
 <div class="mb-3 d-flex align-items-center gap-3">
   <div class="form-check form-switch">

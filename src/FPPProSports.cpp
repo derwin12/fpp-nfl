@@ -322,6 +322,7 @@ public:
           FPPPlugins::APIProviderPlugin(),
           m_running(false),
           m_enabled(false),
+          m_wakeup(false),
           m_logLevel(4) {
 
         for (auto &lg : ALL_LEAGUES)
@@ -391,8 +392,10 @@ public:
                 startThread();
             else if (wasEnabled && !nowEnabled)
                 stopThread();
-            else
+            else {
+                m_wakeup = true;
                 m_cv.notify_all();
+            }
 
             return jsonResp(std::string("{\"status\":\"ok\"}"));
         }
@@ -674,7 +677,8 @@ private:
             if (m_running.load()) {
                 std::unique_lock<std::mutex> lk(m_cvMutex);
                 m_cv.wait_for(lk, std::chrono::seconds(minSleep),
-                              [this] { return !m_running.load(); });
+                              [this] { return !m_running.load() || m_wakeup.load(); });
+                m_wakeup = false;
             }
         }
 
@@ -781,6 +785,7 @@ private:
 
     std::atomic<bool> m_running;
     std::atomic<bool> m_enabled;
+    std::atomic<bool> m_wakeup;
     int               m_logLevel;
 
     std::map<std::string, std::vector<LeagueState>> m_leagues;

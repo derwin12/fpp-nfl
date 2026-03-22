@@ -268,7 +268,7 @@ public:
           m_logLevel(4) {
 
         for (auto &lg : ALL_LEAGUES)
-            m_leagues[lg] = LeagueState();
+            m_leagues[lg] = {};
 
         loadConfig();
 
@@ -342,29 +342,30 @@ public:
 
         if (action == "refresh" && pieces.size() > 2) {
             std::string league = pieces[2];
+            size_t idx = (pieces.size() > 3) ? std::stoul(pieces[3]) : 0;
             if (m_leagues.find(league) == m_leagues.end())
                 return errResp(400, "Unknown league");
 
-            // Copy out, fetch without lock, write back
             LeagueState copy;
             {
                 std::lock_guard<std::mutex> lock(m_stateMutex);
-                copy = m_leagues[league];
+                auto &teams = m_leagues[league];
+                if (idx >= teams.size())
+                    return errResp(400, "Index out of range");
+                copy = teams[idx];
             }
             bool ok = fetchTeamInfo(league, copy);
             if (ok) {
                 std::lock_guard<std::mutex> lock(m_stateMutex);
-                // Only write back if the user hasn't changed the team ID since
-                if (m_leagues[league].teamID == copy.teamID) {
-                    // Preserve user-configured sequences
-                    copy.winSequence       = m_leagues[league].winSequence;
-                    copy.touchdownSequence = m_leagues[league].touchdownSequence;
-                    copy.fieldgoalSequence = m_leagues[league].fieldgoalSequence;
-                    copy.scoreSequence     = m_leagues[league].scoreSequence;
-                    // Reset scores for new team info
+                auto &teams = m_leagues[league];
+                if (idx < teams.size() && teams[idx].teamID == copy.teamID) {
+                    copy.winSequence       = teams[idx].winSequence;
+                    copy.touchdownSequence = teams[idx].touchdownSequence;
+                    copy.fieldgoalSequence = teams[idx].fieldgoalSequence;
+                    copy.scoreSequence     = teams[idx].scoreSequence;
                     copy.myScore   = 0;
                     copy.oppoScore = 0;
-                    m_leagues[league] = copy;
+                    teams[idx] = copy;
                 }
             }
             saveConfig();
@@ -415,25 +416,28 @@ private:
         cfg["logLevel"] = m_logLevel;
 
         for (auto &lg : ALL_LEAGUES) {
-            const LeagueState &s = m_leagues.at(lg);
-            Json::Value lv;
-            lv["teamID"]            = s.teamID;
-            lv["teamName"]          = s.teamName;
-            lv["teamAbbreviation"]  = s.teamAbbreviation;
-            lv["teamLogo"]          = s.teamLogo;
-            lv["nextEventID"]       = s.nextEventID;
-            lv["nextEventDate"]     = s.nextEventDate;
-            lv["gameStatus"]        = s.gameStatus;
-            lv["oppoID"]            = s.oppoID;
-            lv["oppoName"]          = s.oppoName;
-            lv["oppoAbbreviation"]  = s.oppoAbbreviation;
-            lv["myScore"]           = s.myScore;
-            lv["oppoScore"]         = s.oppoScore;
-            lv["winSequence"]       = s.winSequence;
-            lv["touchdownSequence"] = s.touchdownSequence;
-            lv["fieldgoalSequence"] = s.fieldgoalSequence;
-            lv["scoreSequence"]     = s.scoreSequence;
-            cfg["leagues"][lg]      = lv;
+            Json::Value arr(Json::arrayValue);
+            for (const auto &s : m_leagues.at(lg)) {
+                Json::Value lv;
+                lv["teamID"]            = s.teamID;
+                lv["teamName"]          = s.teamName;
+                lv["teamAbbreviation"]  = s.teamAbbreviation;
+                lv["teamLogo"]          = s.teamLogo;
+                lv["nextEventID"]       = s.nextEventID;
+                lv["nextEventDate"]     = s.nextEventDate;
+                lv["gameStatus"]        = s.gameStatus;
+                lv["oppoID"]            = s.oppoID;
+                lv["oppoName"]          = s.oppoName;
+                lv["oppoAbbreviation"]  = s.oppoAbbreviation;
+                lv["myScore"]           = s.myScore;
+                lv["oppoScore"]         = s.oppoScore;
+                lv["winSequence"]       = s.winSequence;
+                lv["touchdownSequence"] = s.touchdownSequence;
+                lv["fieldgoalSequence"] = s.fieldgoalSequence;
+                lv["scoreSequence"]     = s.scoreSequence;
+                arr.append(lv);
+            }
+            cfg["leagues"][lg] = arr;
         }
         return cfg;
     }
@@ -443,21 +447,24 @@ private:
         Json::Value st;
         st["enabled"] = m_enabled.load();
         for (auto &lg : ALL_LEAGUES) {
-            const LeagueState &s = m_leagues.at(lg);
-            Json::Value lv;
-            lv["teamID"]           = s.teamID;
-            lv["teamName"]         = s.teamName;
-            lv["teamAbbreviation"] = s.teamAbbreviation;
-            lv["teamLogo"]         = s.teamLogo;
-            lv["nextEventDate"]    = s.nextEventDate;
-            lv["gameStatus"]       = s.gameStatus;
-            lv["oppoName"]         = s.oppoName;
-            lv["oppoAbbreviation"] = s.oppoAbbreviation;
-            lv["myScore"]          = s.myScore;
-            lv["oppoScore"]        = s.oppoScore;
-            lv["gamePeriod"]       = s.gamePeriod;
-            lv["gameClock"]        = s.gameClock;
-            st["leagues"][lg]      = lv;
+            Json::Value arr(Json::arrayValue);
+            for (const auto &s : m_leagues.at(lg)) {
+                Json::Value lv;
+                lv["teamID"]           = s.teamID;
+                lv["teamName"]         = s.teamName;
+                lv["teamAbbreviation"] = s.teamAbbreviation;
+                lv["teamLogo"]         = s.teamLogo;
+                lv["nextEventDate"]    = s.nextEventDate;
+                lv["gameStatus"]       = s.gameStatus;
+                lv["oppoName"]         = s.oppoName;
+                lv["oppoAbbreviation"] = s.oppoAbbreviation;
+                lv["myScore"]          = s.myScore;
+                lv["oppoScore"]        = s.oppoScore;
+                lv["gamePeriod"]       = s.gamePeriod;
+                lv["gameClock"]        = s.gameClock;
+                arr.append(lv);
+            }
+            st["leagues"][lg] = arr;
         }
         return st;
     }
@@ -474,40 +481,41 @@ private:
 
         for (auto &lg : ALL_LEAGUES) {
             if (!leagues.isMember(lg)) continue;
-            const Json::Value &lv = leagues[lg];
-            LeagueState &s = m_leagues[lg];
+            const Json::Value &arr = leagues[lg];
+            if (!arr.isArray()) continue;
 
-            // If teamID changes, clear game state
-            if (lv.isMember("teamID")) {
-                std::string newID = lv["teamID"].asString();
-                if (newID != s.teamID) {
-                    s.nextEventID   = "";
-                    s.nextEventDate = "";
-                    s.gameStatus    = "";
-                    s.myScore       = 0;
-                    s.oppoScore     = 0;
-                    s.oppoID        = "";
-                    s.oppoName      = "";
-                    s.oppoAbbreviation = "";
+            std::vector<LeagueState> &existing = m_leagues[lg];
+            std::vector<LeagueState> newTeams;
+
+            for (const auto &lv : arr) {
+                std::string newID = lv.get("teamID", "").asString();
+
+                // Start from existing cached state for same teamID
+                LeagueState s;
+                for (const auto &es : existing) {
+                    if (!newID.empty() && es.teamID == newID) { s = es; break; }
                 }
                 s.teamID = newID;
+
+                if (lv.isMember("teamName"))          s.teamName          = lv["teamName"].asString();
+                if (lv.isMember("teamAbbreviation"))  s.teamAbbreviation  = lv["teamAbbreviation"].asString();
+                if (lv.isMember("teamLogo"))          s.teamLogo          = lv["teamLogo"].asString();
+                if (lv.isMember("nextEventID"))       s.nextEventID       = lv["nextEventID"].asString();
+                if (lv.isMember("nextEventDate"))     s.nextEventDate     = lv["nextEventDate"].asString();
+                if (lv.isMember("gameStatus"))        s.gameStatus        = lv["gameStatus"].asString();
+                if (lv.isMember("oppoID"))            s.oppoID            = lv["oppoID"].asString();
+                if (lv.isMember("oppoName"))          s.oppoName          = lv["oppoName"].asString();
+                if (lv.isMember("oppoAbbreviation"))  s.oppoAbbreviation  = lv["oppoAbbreviation"].asString();
+                if (lv.isMember("myScore"))           s.myScore           = lv["myScore"].asInt();
+                if (lv.isMember("oppoScore"))         s.oppoScore         = lv["oppoScore"].asInt();
+                if (lv.isMember("winSequence"))       s.winSequence       = lv["winSequence"].asString();
+                if (lv.isMember("touchdownSequence")) s.touchdownSequence = lv["touchdownSequence"].asString();
+                if (lv.isMember("fieldgoalSequence")) s.fieldgoalSequence = lv["fieldgoalSequence"].asString();
+                if (lv.isMember("scoreSequence"))     s.scoreSequence     = lv["scoreSequence"].asString();
+                newTeams.push_back(std::move(s));
             }
 
-            if (lv.isMember("teamName"))          s.teamName          = lv["teamName"].asString();
-            if (lv.isMember("teamAbbreviation"))  s.teamAbbreviation  = lv["teamAbbreviation"].asString();
-            if (lv.isMember("teamLogo"))          s.teamLogo          = lv["teamLogo"].asString();
-            if (lv.isMember("nextEventID"))       s.nextEventID       = lv["nextEventID"].asString();
-            if (lv.isMember("nextEventDate"))     s.nextEventDate     = lv["nextEventDate"].asString();
-            if (lv.isMember("gameStatus"))        s.gameStatus        = lv["gameStatus"].asString();
-            if (lv.isMember("oppoID"))            s.oppoID            = lv["oppoID"].asString();
-            if (lv.isMember("oppoName"))          s.oppoName          = lv["oppoName"].asString();
-            if (lv.isMember("oppoAbbreviation"))  s.oppoAbbreviation  = lv["oppoAbbreviation"].asString();
-            if (lv.isMember("myScore"))           s.myScore           = lv["myScore"].asInt();
-            if (lv.isMember("oppoScore"))         s.oppoScore         = lv["oppoScore"].asInt();
-            if (lv.isMember("winSequence"))       s.winSequence       = lv["winSequence"].asString();
-            if (lv.isMember("touchdownSequence")) s.touchdownSequence = lv["touchdownSequence"].asString();
-            if (lv.isMember("fieldgoalSequence")) s.fieldgoalSequence = lv["fieldgoalSequence"].asString();
-            if (lv.isMember("scoreSequence"))     s.scoreSequence     = lv["scoreSequence"].asString();
+            m_leagues[lg] = std::move(newTeams);
         }
     }
 
@@ -565,7 +573,7 @@ private:
             }
 
             // Copy state out under lock so ESPN calls don't hold m_stateMutex
-            std::map<std::string, LeagueState> snap;
+            std::map<std::string, std::vector<LeagueState>> snap;
             {
                 std::lock_guard<std::mutex> lock(m_stateMutex);
                 snap = m_leagues;
@@ -575,23 +583,29 @@ private:
 
             for (auto &lg : ALL_LEAGUES) {
                 if (!m_running.load()) break;
+                auto &teams = snap[lg];
 
-                LeagueState &ls = snap[lg];
-                if (ls.teamID.empty()) continue;
+                for (size_t i = 0; i < teams.size(); i++) {
+                    if (!m_running.load()) break;
+                    LeagueState &ls = teams[i];
+                    if (ls.teamID.empty()) continue;
 
-                int sleepSecs = pollLeague(lg, ls);
-                if (sleepSecs < minSleep) minSleep = sleepSecs;
+                    int sleepSecs = pollLeague(lg, ls);
+                    if (sleepSecs < minSleep) minSleep = sleepSecs;
 
-                // Write back under lock; skip if teamID changed while we polled
-                {
-                    std::lock_guard<std::mutex> lock(m_stateMutex);
-                    if (m_leagues[lg].teamID == ls.teamID) {
-                        // Preserve user-configured sequences (may have changed via UI)
-                        ls.winSequence       = m_leagues[lg].winSequence;
-                        ls.touchdownSequence = m_leagues[lg].touchdownSequence;
-                        ls.fieldgoalSequence = m_leagues[lg].fieldgoalSequence;
-                        ls.scoreSequence     = m_leagues[lg].scoreSequence;
-                        m_leagues[lg] = ls;
+                    // Write back under lock; match by teamID
+                    {
+                        std::lock_guard<std::mutex> lock(m_stateMutex);
+                        for (auto &mt : m_leagues[lg]) {
+                            if (mt.teamID == ls.teamID) {
+                                ls.winSequence       = mt.winSequence;
+                                ls.touchdownSequence = mt.touchdownSequence;
+                                ls.fieldgoalSequence = mt.fieldgoalSequence;
+                                ls.scoreSequence     = mt.scoreSequence;
+                                mt = ls;
+                                break;
+                            }
+                        }
                     }
                 }
             }
@@ -710,7 +724,7 @@ private:
     std::atomic<bool> m_enabled;
     int               m_logLevel;
 
-    std::map<std::string, LeagueState> m_leagues;
+    std::map<std::string, std::vector<LeagueState>> m_leagues;
 };
 
 // ---------------------------------------------------------------------------

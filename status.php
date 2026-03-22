@@ -72,7 +72,8 @@ async function loadStatus() {
         let anyActive = false;
 
         for (const lg of ['nfl', 'ncaa', 'nhl', 'mlb']) {
-            const ls = leagues[lg] || {};
+            const teams = leagues[lg] || [];
+            for (const ls of teams) {
             if (!ls.teamID) continue;
             anyActive = true;
 
@@ -122,6 +123,7 @@ async function loadStatus() {
     ${scoreHtml}
   </div>
 </div>`;
+            } // end for ls of teams
         }
 
         if (!anyActive) {

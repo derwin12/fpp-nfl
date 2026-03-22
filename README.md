@@ -1,5 +1,5 @@
-# fpp-nfl
+# fpp-gameday
 
-## Pro Sports Scoring Plugin
+## GameDay Scoring Plugin
 
-This plugin is designed for Falcon Pi Player and currently supports NFL, NCAA Football, NHL, and MLB games.
+This plugin is designed for FPP and currently supports NFL, NCAA Football, NHL, MLB games and AFL.

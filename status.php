@@ -87,16 +87,17 @@ async function loadStatus() {
             if (gameState === 'in' || gameState === 'post') {
                 const period = ls.gamePeriod || 0;
                 const clock  = ls.gameClock  || '';
-                let periodLabel = '';
+                let periodLine = '';
                 if (gameState === 'in' && period > 0) {
-                    periodLabel = ` &bull; Period ${period}` + (clock && clock !== '0:00' ? ` &bull; ${clock}` : '');
+                    const clockStr = (clock && clock !== '0:00') ? ` &mdash; ${clock}` : '';
+                    periodLine = `<div class="text-muted small text-center mt-1">Period ${period}${clockStr}</div>`;
                 }
                 scoreHtml = `
-                <div class="mt-2">
+                <div class="mt-2 text-center">
                   <span class="fs-4 fw-bold">${ls.teamName || ls.teamID} ${ls.myScore ?? 0}</span>
-                  <span class="fs-5 text-muted mx-2">vs</span>
+                  <span class="fs-5 text-muted mx-3">vs</span>
                   <span class="fs-4 fw-bold">${oppoName} ${ls.oppoScore ?? 0}</span>
-                  <span class="text-muted small">${periodLabel}</span>
+                  ${periodLine}
                 </div>`;
             }
 

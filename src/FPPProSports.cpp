@@ -127,6 +127,9 @@ static bool isFootball(const std::string &league) {
     return league == "nfl" || league == "ncaa";
 }
 
+// AFL uses goal+behind scoring; treat any score delta as a "score" event (like hockey)
+// Quarter-based game — period label handled in UI
+
 // ---------------------------------------------------------------------------
 // ESPN API helpers
 // ---------------------------------------------------------------------------
@@ -134,6 +137,7 @@ static bool isFootball(const std::string &league) {
 static std::string espnSport(const std::string &league) {
     if (league == "nhl") return "hockey";
     if (league == "mlb") return "baseball";
+    if (league == "afl") return "australian-football";
     return "football";
 }
 
@@ -259,7 +263,7 @@ static void triggerSequence(const std::string &seq) {
 // Plugin class
 // ---------------------------------------------------------------------------
 
-static const std::vector<std::string> ALL_LEAGUES = {"nfl", "ncaa", "nhl", "mlb"};
+static const std::vector<std::string> ALL_LEAGUES = {"nfl", "ncaa", "nhl", "mlb", "afl"};
 
 class FPPProSportsPlugin : public FPPPlugins::Plugin,
                            public FPPPlugins::APIProviderPlugin,

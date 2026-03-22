@@ -27,7 +27,12 @@ const LEAGUE_LABELS = {
     nfl:  'NFL Football',
     ncaa: 'NCAA Football',
     nhl:  'NHL Hockey',
-    mlb:  'MLB Baseball'
+    mlb:  'MLB Baseball',
+    afl:  'AFL'
+};
+const PERIOD_LABEL = {
+    nfl:  'Q', ncaa: 'Q', afl: 'Q',
+    nhl:  'P', mlb:  'Inn'
 };
 
 function formatDate(dateStr) {
@@ -71,7 +76,7 @@ async function loadStatus() {
         let html = '';
         let anyActive = false;
 
-        for (const lg of ['nfl', 'ncaa', 'nhl', 'mlb']) {
+        for (const lg of ['nfl', 'ncaa', 'nhl', 'mlb', 'afl']) {
             const teams = leagues[lg] || [];
             for (const ls of teams) {
             if (!ls.teamID) continue;
@@ -90,8 +95,9 @@ async function loadStatus() {
                 const clock  = ls.gameClock  || '';
                 let periodStr = '';
                 if (period > 0) {
+                    const pl = PERIOD_LABEL[lg] || 'P';
                     periodStr = gameState === 'in'
-                        ? `<span class="text-muted small ms-3">P${period}` + (clock && clock !== '0:00' ? ` ${clock}` : '') + `</span>`
+                        ? `<span class="text-muted small ms-3">${pl}${period}` + (clock && clock !== '0:00' ? ` ${clock}` : '') + `</span>`
                         : '';
                 }
                 centerHtml = `<span class="fw-bold">${myName} ${ls.myScore ?? 0}</span>

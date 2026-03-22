@@ -64,6 +64,7 @@ $teamsData = [
     'ncaa' => getNCAATeams(),
     'nhl'  => getTeams('hockey', 'nhl'),
     'mlb'  => getTeams('baseball', 'mlb'),
+    'afl'  => getTeams('australian-football', 'afl'),
 ];
 $sequences = getSequences();
 ?>
@@ -99,6 +100,9 @@ $sequences = getSequences();
   <li class="nav-item" role="presentation">
     <button class="nav-link"        data-bs-toggle="tab" data-bs-target="#pane-mlb"  type="button">MLB</button>
   </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link"        data-bs-toggle="tab" data-bs-target="#pane-afl"  type="button">AFL</button>
+  </li>
 </ul>
 
 <div class="tab-content">
@@ -118,13 +122,17 @@ $sequences = getSequences();
     <div id="teams-mlb"></div>
     <button class="btn btn-outline-secondary btn-sm mt-2" onclick="addTeamRow('mlb')">+ Add MLB Team</button>
   </div>
+  <div class="tab-pane fade" id="pane-afl" role="tabpanel">
+    <div id="teams-afl"></div>
+    <button class="btn btn-outline-secondary btn-sm mt-2" onclick="addTeamRow('afl')">+ Add AFL Team</button>
+  </div>
 </div>
 
 <script>
 const TEAMS_DATA = <?= json_encode($teamsData) ?>;
 const SEQUENCES  = <?= json_encode($sequences) ?>;
-const LEAGUES    = ['nfl', 'ncaa', 'nhl', 'mlb'];
-const LEAGUE_LABELS = { nfl: 'NFL Football', ncaa: 'NCAA Football', nhl: 'NHL Hockey', mlb: 'MLB Baseball' };
+const LEAGUES    = ['nfl', 'ncaa', 'nhl', 'mlb', 'afl'];
+const LEAGUE_LABELS = { nfl: 'NFL Football', ncaa: 'NCAA Football', nhl: 'NHL Hockey', mlb: 'MLB Baseball', afl: 'AFL' };
 
 function buildTeamSelect(lg, selectedID) {
     const sel = document.createElement('select');
